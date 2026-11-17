@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isValidResume(data) {
+      return data.userId is string &&
+             data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             isValidString(data.title, 1, 100) &&
+             data.templateId in ['CLASSIC', 'MODERN', 'TECHNICAL'] &&
+             data.accentId in ['INK_NAVY', 'TERRACOTTA', 'FOREST_SAGE', 'CHARCOAL', 'BURGUNDY'] &&
+             data.pageSize in ['A4', 'LETTER'] &&
+             data.showPhotoInPdf is bool &&
+             isValidString(data.fullName, 0, 120) &&
+             isValidString(data.headline, 0, 150) &&
+             isValidString(data.email, 0, 150) &&
+             isValidString(data.phone, 0, 50) &&
+             isValidString(data.location, 0, 120) &&
+             isValidString(data.website, 0, 250) &&
+             isValidString(data.linkedIn, 0, 250) &&
+             isValidString(data.summary, 0, 2000) &&
+             data.experiences is list && data.experiences.size() <= 30 &&
+             (data.experiences.size() == 0 || data.experiences[0] is map) &&
+             data.educations is list && data.educations.size() <= 20 &&
+             (data.educations.size() == 0 || data.educations[0] is map) &&
+             data.skills is list && data.skills.size() <= 50 &&
+             (data.skills.size() == 0 || data.skills[0] is string) &&
+             data.projects is list && data.projects.size() <= 30 &&
+             (data.projects.size() == 0 || data.projects[0] is map) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId}/resumes/{resumeId} {
+      allow get: if isOwner(userId) && isValidId(resumeId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(resumeId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'userId', 'title', 'templateId', 'accentId', 'pageSize',
+                         'showPhotoInPdf', 'fullName', 'headline', 'email', 'phone',
+                         'location', 'website', 'linkedIn', 'summary',
+                         'experiences', 'educations', 'skills', 'projects',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'title', 'templateId', 'accentId', 'pageSize',
+                         'showPhotoInPdf', 'fullName', 'headline', 'email', 'phone',
+                         'location', 'website', 'linkedIn', 'summary',
+                         'experiences', 'educations', 'skills', 'projects',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidResume(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(resumeId) &&
+                       isValidResume(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'title', 'templateId', 'accentId', 'pageSize',
+                         'showPhotoInPdf', 'fullName', 'headline', 'email', 'phone',
+                         'location', 'website', 'linkedIn', 'summary',
+                         'experiences', 'educations', 'skills', 'projects',
+                         'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(resumeId);
+    }
+  }
+}

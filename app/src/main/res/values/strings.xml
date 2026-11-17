@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">ResumeCraft</string>
+    <string name="auth_tagline">Editorial Resume Studio</string>
+    <string name="auth_headline">Craft ATS-ready resumes &amp; export crisp PDFs</string>
+    <string name="auth_subhead">Structure your career once, preview across timeless templates, and share print-grade PDFs anywhere.</string>
+    <string name="auth_sign_in_google">Sign in with Google</string>
+    <string name="auth_sign_out">Sign out</string>
+    <string name="portfolio_title">Resume Portfolio</string>
+    <string name="portfolio_new_resume">New Resume</string>
+    <string name="portfolio_empty_title">Your portfolio awaits</string>
+    <string name="portfolio_empty_subtitle">Create your first structured resume profile to customize templates and export a crisp PDF.</string>
+    <string name="editor_save">Save</string>
+    <string name="editor_preview_pdf">Preview &amp; PDF</string>
+    <string name="preview_save_pdf">Save PDF</string>
+    <string name="preview_share_pdf">Share PDF</string>
+    <string name="preview_open_pdf">Open PDF</string>
+</resources>
